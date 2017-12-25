@@ -1,6 +1,6 @@
 FROM golang:1.8
 
-WORKDIR /go/src/github.com/chrisfisher/owlery
+WORKDIR /go/src/github.com/chrisfisher/jubilant-waffle
 COPY . .
 
 RUN go-wrapper download   # "go get -d -v ./..."

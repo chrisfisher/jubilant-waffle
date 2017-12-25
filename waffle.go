@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/chrisfisher/waffle/cinema"
+	"github.com/chrisfisher/jubilant-waffle/cinema"
 	"github.com/neelance/graphql-go"
 	"github.com/neelance/graphql-go/relay"
 	"log"
