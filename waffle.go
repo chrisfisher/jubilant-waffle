@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/chrisfisher/jubilant-waffle/cinema"
+	"github.com/chrisfisher/jubilant-waffle/api"
 	"github.com/neelance/graphql-go"
 	"github.com/neelance/graphql-go/relay"
 	"log"
@@ -9,10 +9,12 @@ import (
 	"os"
 )
 
-var schema *graphql.Schema
+var (
+	schema *graphql.Schema
+)
 
 func init() {
-	schema = graphql.MustParseSchema(cinema.Schema, &cinema.Resolver{})
+	schema = graphql.MustParseSchema(api.Schema, &api.Resolver{})
 }
 
 func main() {

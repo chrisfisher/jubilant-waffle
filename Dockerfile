@@ -8,5 +8,5 @@ RUN go-wrapper install    # "go install -v ./..."
 
 CMD ["go-wrapper", "run"] # ["app"]
 
-# docker build -t myapp .
-# docker run -it --rm -p 8080:8080 myapp
+# docker build -t waffle .
+# docker run -it --rm -p 8080:8080 waffle
