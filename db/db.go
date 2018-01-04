@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"log"
 
 	"gopkg.in/mgo.v2"
@@ -8,26 +9,36 @@ import (
 
 var session *mgo.Session
 
-var dbName = "cinema"
+const dbName = "cinema"
 
-type Context struct {
+const ClientKey = "dbClient"
+
+type Client struct {
 	MongoSession *mgo.Session
 }
 
-func (c *Context) DbCollection(name string) *mgo.Collection {
+func (c *Client) DbCollection(name string) *mgo.Collection {
 	return c.MongoSession.DB(dbName).C(name)
 }
 
-func (c *Context) Close() {
+func (c *Client) Close() {
 	c.MongoSession.Close()
 }
 
-func NewContext() *Context {
+func NewClient() *Client {
 	session := getSession().Copy()
-	context := &Context{
+	client := &Client{
 		MongoSession: session,
 	}
-	return context
+	return client
+}
+
+func FromContext(ctx context.Context) *Client {
+	client, ok := ctx.Value(ClientKey).(*Client)
+	if !ok {
+		return nil
+	}
+	return client
 }
 
 func getSession() *mgo.Session {

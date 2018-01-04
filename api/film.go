@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"github.com/chrisfisher/jubilant-waffle/db"
 	"github.com/chrisfisher/jubilant-waffle/models"
 	"github.com/chrisfisher/jubilant-waffle/repositories"
@@ -23,23 +24,21 @@ type Review struct {
 }
 
 type filmResolver struct {
-	film      *Film
-	dbContext *db.Context
+	film *Film
 }
 
 type reviewResolver struct {
-	review    *Review
-	dbContext *db.Context
+	review *Review
 }
 
-func (r *Resolver) Film(args struct{ ID graphql.ID }) *filmResolver {
-	context := db.NewContext()
-	return getFilmById(string(args.ID), context)
+func (r *Resolver) Film(ctx context.Context, args struct{ ID graphql.ID }) *filmResolver {
+	client := db.FromContext(ctx)
+	return getFilmById(string(args.ID), client)
 }
 
-func (r *Resolver) SearchFilms(args struct{ Title string }) []*filmResolver {
-	context := db.NewContext()
-	return searchFilmsByTitle(args.Title, context)
+func (r *Resolver) SearchFilms(ctx context.Context, args struct{ Title string }) []*filmResolver {
+	client := db.FromContext(ctx)
+	return searchFilmsByTitle(args.Title, client)
 }
 
 func (r *filmResolver) ID() graphql.ID {
@@ -61,7 +60,7 @@ func (r *filmResolver) Rating() string {
 func (r *filmResolver) Reviews() *[]*reviewResolver {
 	l := make([]*reviewResolver, len(r.film.Reviews))
 	for i, review := range r.film.Reviews {
-		l[i] = &reviewResolver{&review, r.dbContext}
+		l[i] = &reviewResolver{&review}
 	}
 	return &l
 }
@@ -78,8 +77,8 @@ func (r *reviewResolver) Comments() string {
 	return r.review.Comments
 }
 
-func getFilmById(id string, context *db.Context) *filmResolver {
-	filmRepo := &repositories.FilmRepository{C: context.DbCollection("films")}
+func getFilmById(id string, client *db.Client) *filmResolver {
+	filmRepo := &repositories.FilmRepository{C: client.DbCollection("films")}
 	dbFilm, err := filmRepo.GetById(id)
 	if err != nil {
 		return nil
@@ -91,12 +90,12 @@ func getFilmById(id string, context *db.Context) *filmResolver {
 		Rating:      dbFilm.Rating,
 		Reviews:     mapReviews(dbFilm.Reviews),
 	}
-	return &filmResolver{&film, context}
+	return &filmResolver{&film}
 }
 
-func searchFilmsByTitle(text string, context *db.Context) []*filmResolver {
-	repo := &repositories.FilmRepository{C: context.DbCollection("films")}
-	dbFilms := repo.SearchByTitle(text)
+func searchFilmsByTitle(title string, client *db.Client) []*filmResolver {
+	repo := &repositories.FilmRepository{C: client.DbCollection("films")}
+	dbFilms := repo.SearchByTitle(title)
 	var filmResolvers []*filmResolver
 	for _, dbFilm := range dbFilms {
 		film := Film{
@@ -106,7 +105,7 @@ func searchFilmsByTitle(text string, context *db.Context) []*filmResolver {
 			Rating:      dbFilm.Rating,
 			Reviews:     mapReviews(dbFilm.Reviews),
 		}
-		filmResolvers = append(filmResolvers, &filmResolver{&film, context})
+		filmResolvers = append(filmResolvers, &filmResolver{&film})
 	}
 	return filmResolvers
 }

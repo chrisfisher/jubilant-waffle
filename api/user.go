@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/chrisfisher/jubilant-waffle/db"
@@ -26,20 +27,17 @@ type Viewing struct {
 }
 
 type userResolver struct {
-	user      *User
-	dbContext *db.Context
+	user *User
 }
 
 type viewingResolver struct {
-	viewing   *Viewing
-	dbContext *db.Context
+	viewing *Viewing
 }
 
 type viewingConnectionResolver struct {
-	viewings  []Viewing
-	from      int
-	to        int
-	dbContext *db.Context
+	viewings []Viewing
+	from     int
+	to       int
 }
 
 type viewingConnectionArgs struct {
@@ -48,9 +46,8 @@ type viewingConnectionArgs struct {
 }
 
 type viewingEdgeResolver struct {
-	cursor    graphql.ID
-	viewing   Viewing
-	dbContext *db.Context
+	cursor  graphql.ID
+	viewing Viewing
 }
 
 type pageInfoResolver struct {
@@ -59,14 +56,14 @@ type pageInfoResolver struct {
 	hasNextPage bool
 }
 
-func (r *Resolver) User(args struct{ ID graphql.ID }) *userResolver {
-	context := db.NewContext()
-	return getUserById(string(args.ID), context)
+func (r *Resolver) User(ctx context.Context, args struct{ ID graphql.ID }) *userResolver {
+	client := db.FromContext(ctx)
+	return getUserById(string(args.ID), client)
 }
 
-func (r *Resolver) SearchUsers(args struct{ Name string }) []*userResolver {
-	context := db.NewContext()
-	return searchUsersByName(args.Name, context)
+func (r *Resolver) SearchUsers(ctx context.Context, args struct{ Name string }) []*userResolver {
+	client := db.FromContext(ctx)
+	return searchUsersByName(args.Name, client)
 }
 
 func (r *userResolver) ID() graphql.ID {
@@ -80,13 +77,13 @@ func (r *userResolver) Name() string {
 func (r *userResolver) Viewings() *[]*viewingResolver {
 	viewingResolvers := make([]*viewingResolver, len(r.user.Viewings))
 	for i, viewing := range r.user.Viewings {
-		viewingResolvers[i] = &viewingResolver{&viewing, r.dbContext}
+		viewingResolvers[i] = &viewingResolver{&viewing}
 	}
 	return &viewingResolvers
 }
 
 func (r *userResolver) ViewingConnection(args viewingConnectionArgs) (*viewingConnectionResolver, error) {
-	return newViewingConnectionResolver(r.user.Viewings, args, r.dbContext)
+	return newViewingConnectionResolver(r.user.Viewings, args)
 }
 
 func (r *viewingResolver) ID() graphql.ID {
@@ -101,8 +98,9 @@ func (r *viewingResolver) EndTime() graphql.Time {
 	return r.viewing.EndTime
 }
 
-func (r *viewingResolver) Film() *filmResolver {
-	return getFilmById(string(r.viewing.Film), r.dbContext)
+func (r *viewingResolver) Film(ctx context.Context) *filmResolver {
+	client := db.FromContext(ctx)
+	return getFilmById(string(r.viewing.Film), client)
 }
 
 func (r *viewingConnectionResolver) TotalCount() int32 {
@@ -113,9 +111,8 @@ func (r *viewingConnectionResolver) Edges() *[]*viewingEdgeResolver {
 	l := make([]*viewingEdgeResolver, r.to-r.from)
 	for i := range l {
 		l[i] = &viewingEdgeResolver{
-			cursor:    encodeCursor(r.from + i),
-			viewing:   r.viewings[r.from+i],
-			dbContext: r.dbContext,
+			cursor:  encodeCursor(r.from + i),
+			viewing: r.viewings[r.from+i],
 		}
 	}
 	return &l
@@ -138,7 +135,7 @@ func (r *viewingEdgeResolver) Cursor() graphql.ID {
 }
 
 func (r *viewingEdgeResolver) Node() *viewingResolver {
-	return &viewingResolver{&r.viewing, r.dbContext}
+	return &viewingResolver{&r.viewing}
 }
 
 func (r *pageInfoResolver) StartCursor() *graphql.ID {
@@ -153,8 +150,8 @@ func (r *pageInfoResolver) HasNextPage() bool {
 	return r.hasNextPage
 }
 
-func getUserById(id string, context *db.Context) *userResolver {
-	repo := &repositories.UserRepository{C: context.DbCollection("users")}
+func getUserById(id string, client *db.Client) *userResolver {
+	repo := &repositories.UserRepository{C: client.DbCollection("users")}
 	dbUser, err := repo.GetById(id)
 	user := User{
 		ID:       graphql.ID(dbUser.Id.Hex()),
@@ -162,13 +159,13 @@ func getUserById(id string, context *db.Context) *userResolver {
 		Viewings: mapViewings(dbUser.Viewings),
 	}
 	if err == nil {
-		return &userResolver{&user, context}
+		return &userResolver{&user}
 	}
 	return nil
 }
 
-func searchUsersByName(name string, context *db.Context) []*userResolver {
-	repo := &repositories.UserRepository{C: context.DbCollection("users")}
+func searchUsersByName(name string, client *db.Client) []*userResolver {
+	repo := &repositories.UserRepository{C: client.DbCollection("users")}
 	dbUsers := repo.SearchByName(name)
 	var userResolvers []*userResolver
 	for _, dbUser := range dbUsers {
@@ -177,7 +174,7 @@ func searchUsersByName(name string, context *db.Context) []*userResolver {
 			Name:     dbUser.Name,
 			Viewings: mapViewings(dbUser.Viewings),
 		}
-		userResolvers = append(userResolvers, &userResolver{&user, context})
+		userResolvers = append(userResolvers, &userResolver{&user})
 	}
 	return userResolvers
 }
@@ -195,7 +192,7 @@ func mapViewings(dbViewings []models.Viewing) []Viewing {
 	return viewings
 }
 
-func newViewingConnectionResolver(viewings []Viewing, args viewingConnectionArgs, context *db.Context) (*viewingConnectionResolver, error) {
+func newViewingConnectionResolver(viewings []Viewing, args viewingConnectionArgs) (*viewingConnectionResolver, error) {
 	from := 0
 	if args.After != nil {
 		b, err := base64.StdEncoding.DecodeString(string(*args.After))
@@ -218,9 +215,8 @@ func newViewingConnectionResolver(viewings []Viewing, args viewingConnectionArgs
 	}
 
 	return &viewingConnectionResolver{
-		viewings:  viewings,
-		from:      from,
-		to:        to,
-		dbContext: context,
+		viewings: viewings,
+		from:     from,
+		to:       to,
 	}, nil
 }
