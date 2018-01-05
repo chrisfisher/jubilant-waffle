@@ -1,4 +1,4 @@
-package api
+package schema
 
 var Schema = `
 	schema {
@@ -91,6 +91,3 @@ var Schema = `
 	# A timestamp
 	scalar Time
 `
-
-type Resolver struct {
-}
