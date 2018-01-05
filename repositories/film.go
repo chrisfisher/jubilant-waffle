@@ -38,13 +38,3 @@ func (r *FilmRepository) Delete(id string) error {
 	err := r.C.Remove(bson.M{"_id": bson.ObjectIdHex(id)})
 	return err
 }
-
-func (r *FilmRepository) GetReviews(filmId string) []models.Review {
-	var reviews []models.Review
-	iter := r.C.Find(bson.M{"filmId": filmId}).Iter()
-	result := models.Review{}
-	for iter.Next(&result) {
-		reviews = append(reviews, result)
-	}
-	return reviews
-}
