@@ -5,9 +5,10 @@ import (
 )
 
 type Film struct {
-	ID          graphql.ID
-	Title       string
-	Description string
-	Rating      string
-	Reviews     []Review
+	ID            graphql.ID
+	Title         string
+	Description   string
+	Rating        string
+	Reviews       []Review
+	ViewedByUsers []graphql.ID
 }

@@ -1,18 +1,20 @@
 package models
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type (
 	Film struct {
-		Id          bson.ObjectId `bson:"_id,omitempty" json:"id"`
-		Title       string        `json:"title"`
-		Description string        `json:"description"`
-		Rating      string        `json:"rating"`
-		CreatedOn   time.Time     `json:"created_on,omitempty"`
-		Reviews     []Review      `json:"review"`
+		Id            bson.ObjectId   `bson:"_id,omitempty" json:"id"`
+		Title         string          `json:"title"`
+		Description   string          `json:"description"`
+		Rating        string          `json:"rating"`
+		CreatedOn     time.Time       `json:"created_on,omitempty"`
+		Reviews       []Review        `json:"review"`
+		ViewedByUsers []bson.ObjectId `json:"watched_by"`
 	}
 
 	Review struct {

@@ -34,6 +34,8 @@ var Schema = `
 		rating: Rating!
 		# Any reviews of the film
 		reviews: [Review]
+		# Viewed by users
+		viewedByUsers: [User]
 	}
 	# A film review
 	type Review {

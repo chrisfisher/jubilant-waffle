@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"github.com/chrisfisher/jubilant-waffle/schema/types"
+
 	graphql "github.com/neelance/graphql-go"
 )
 

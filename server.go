@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/chrisfisher/jubilant-waffle/db"
+	"github.com/chrisfisher/jubilant-waffle/loaders"
 	"github.com/chrisfisher/jubilant-waffle/resolvers"
 	"github.com/chrisfisher/jubilant-waffle/schema"
 	"github.com/neelance/graphql-go"
@@ -15,7 +16,7 @@ import (
 var s *graphql.Schema
 
 func init() {
-	s = graphql.MustParseSchema(schema.Schema, &resolvers.Resolver{})
+	s = graphql.MustParseSchema(schema.Schema, &resolvers.QueryResolver{})
 }
 
 func main() {
@@ -47,7 +48,8 @@ func handleQuery(w http.ResponseWriter, r *http.Request) {
 
 	// make db client request-scoped and available via context
 	client := db.NewClient()
-	ctx := context.WithValue(r.Context(), db.ClientKey, client)
+	ctx := loaders.NewContext(r.Context(), client)
+	ctx = context.WithValue(ctx, db.ClientKey, client)
 	defer client.Close()
 
 	response := s.Exec(ctx, params.Query, params.OperationName, params.Variables)

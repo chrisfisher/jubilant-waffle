@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/chrisfisher/jubilant-waffle/db"
-	"github.com/chrisfisher/jubilant-waffle/schema/types"
 	"strconv"
 	"strings"
+
+	"github.com/chrisfisher/jubilant-waffle/loaders"
+	"github.com/chrisfisher/jubilant-waffle/schema/types"
 
 	graphql "github.com/neelance/graphql-go"
 )
@@ -51,8 +52,8 @@ func (r *viewingResolver) EndTime() graphql.Time {
 }
 
 func (r *viewingResolver) Film(ctx context.Context) *filmResolver {
-	client := db.FromContext(ctx)
-	return getFilmById(string(r.viewing.Film), client)
+	film := loaders.LoadFilmById(string(r.viewing.Film), ctx)
+	return &filmResolver{film}
 }
 
 func (r *viewingConnectionResolver) TotalCount() int32 {
