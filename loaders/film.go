@@ -16,8 +16,8 @@ import (
 )
 
 func LoadFilmById(id string, ctx context.Context) *schema.Film {
-	ldr, err := fromContext(ctx, filmLoaderKey)
-	if err != nil {
+	ldr := GetFromContext(ctx, filmLoaderKey)
+	if ldr == nil {
 		return nil
 	}
 	data, err := ldr.Load(ctx, id)()
@@ -40,7 +40,7 @@ func LoadFilmById(id string, ctx context.Context) *schema.Film {
 }
 
 func LoadFilmsByTitle(title string, ctx context.Context) []*schema.Film {
-	client := db.FromContext(ctx)
+	client := db.GetFromContext(ctx)
 	ldr := newFilmLoader(client)
 	dbFilms := ldr.r.SearchByTitle(title)
 	var films []*schema.Film

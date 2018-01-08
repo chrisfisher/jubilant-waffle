@@ -1,17 +1,10 @@
 package db
 
 import (
-	"context"
 	"log"
 
 	"gopkg.in/mgo.v2"
 )
-
-var session *mgo.Session
-
-const dbName = "cinema"
-
-const ClientKey = "dbClient"
 
 type Client struct {
 	MongoSession *mgo.Session
@@ -25,18 +18,12 @@ func (c *Client) Close() {
 	c.MongoSession.Close()
 }
 
+var session *mgo.Session
+
 func NewClient() *Client {
 	session := getSession().Copy()
 	client := &Client{
 		MongoSession: session,
-	}
-	return client
-}
-
-func FromContext(ctx context.Context) *Client {
-	client, ok := ctx.Value(ClientKey).(*Client)
-	if !ok {
-		return nil
 	}
 	return client
 }

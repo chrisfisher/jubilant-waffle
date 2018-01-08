@@ -2,7 +2,6 @@ package loaders
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/chrisfisher/jubilant-waffle/db"
 
@@ -11,16 +10,16 @@ import (
 
 type key string
 
+func (k key) String() string {
+	return string(k)
+}
+
 const filmLoaderKey key = "film"
 const userLoaderKey key = "user"
 
 var loadersByKey map[key]*dataloader.Loader = make(map[key]*dataloader.Loader)
 
-func (k key) String() string {
-	return string(k)
-}
-
-func NewContext(ctx context.Context, client *db.Client) context.Context {
+func AttachToContext(ctx context.Context, client *db.Client) context.Context {
 	loadersByKey[filmLoaderKey] = dataloader.NewBatchedLoader(newFilmLoader(client).loadBatch)
 	loadersByKey[userLoaderKey] = dataloader.NewBatchedLoader(newUserLoader(client).loadBatch)
 
@@ -30,12 +29,12 @@ func NewContext(ctx context.Context, client *db.Client) context.Context {
 	return ctx
 }
 
-func fromContext(ctx context.Context, k key) (*dataloader.Loader, error) {
+func GetFromContext(ctx context.Context, k key) *dataloader.Loader {
 	ldr, ok := ctx.Value(k).(*dataloader.Loader)
 	if !ok {
-		return nil, fmt.Errorf("cannot extract %s loader from context", k)
+		return nil
 	}
-	return ldr, nil
+	return ldr
 }
 
 func convert(keys []interface{}) []string {

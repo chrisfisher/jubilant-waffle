@@ -14,8 +14,8 @@ import (
 )
 
 func LoadUserById(id string, ctx context.Context) *schema.User {
-	ldr, err := fromContext(ctx, userLoaderKey)
-	if err != nil {
+	ldr := GetFromContext(ctx, userLoaderKey)
+	if ldr == nil {
 		return nil
 	}
 	data, err := ldr.Load(ctx, id)()
@@ -35,7 +35,7 @@ func LoadUserById(id string, ctx context.Context) *schema.User {
 }
 
 func LoadUsersByName(name string, ctx context.Context) []*schema.User {
-	client := db.FromContext(ctx)
+	client := db.GetFromContext(ctx)
 	ldr := newUserLoader(client)
 	dbUsers := ldr.r.SearchByName(name)
 	var users []*schema.User

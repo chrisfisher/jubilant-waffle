@@ -1,16 +1,17 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
+	"log"
+	"net/http"
+	"os"
+
 	"github.com/chrisfisher/jubilant-waffle/db"
 	"github.com/chrisfisher/jubilant-waffle/loaders"
 	"github.com/chrisfisher/jubilant-waffle/resolvers"
 	"github.com/chrisfisher/jubilant-waffle/schema"
+
 	"github.com/neelance/graphql-go"
-	"log"
-	"net/http"
-	"os"
 )
 
 var s *graphql.Schema
@@ -34,13 +35,13 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func handleQuery(w http.ResponseWriter, r *http.Request) {
-	var params struct {
-		Query         string                 `json:"query"`
-		OperationName string                 `json:"operationName"`
-		Variables     map[string]interface{} `json:"variables"`
-	}
+var params struct {
+	Query         string                 `json:"query"`
+	OperationName string                 `json:"operationName"`
+	Variables     map[string]interface{} `json:"variables"`
+}
 
+func handleQuery(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -48,8 +49,9 @@ func handleQuery(w http.ResponseWriter, r *http.Request) {
 
 	// make db client request-scoped and available via context
 	client := db.NewClient()
-	ctx := loaders.NewContext(r.Context(), client)
-	ctx = context.WithValue(ctx, db.ClientKey, client)
+	ctx := r.Context()
+	ctx = db.AttachToContext(ctx, client)
+	ctx = loaders.AttachToContext(ctx, client)
 	defer client.Close()
 
 	response := s.Exec(ctx, params.Query, params.OperationName, params.Variables)
