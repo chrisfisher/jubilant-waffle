@@ -17,7 +17,7 @@ import (
 var s *graphql.Schema
 
 func init() {
-	s = graphql.MustParseSchema(schema.Schema, &resolvers.QueryResolver{})
+	s = graphql.MustParseSchema(schema.Schema, &resolvers.SchemaResolver{})
 }
 
 func main() {

@@ -4,13 +4,12 @@ import (
 	"context"
 
 	"github.com/chrisfisher/jubilant-waffle/server/db"
+	"github.com/chrisfisher/jubilant-waffle/server/mappers"
 	"github.com/chrisfisher/jubilant-waffle/server/models"
 	"github.com/chrisfisher/jubilant-waffle/server/repositories"
 	"github.com/chrisfisher/jubilant-waffle/server/schema/types"
 
 	"gopkg.in/nicksrandall/dataloader.v4"
-
-	graphql "github.com/neelance/graphql-go"
 )
 
 func LoadUserById(id string, ctx context.Context) *schema.User {
@@ -22,32 +21,11 @@ func LoadUserById(id string, ctx context.Context) *schema.User {
 	if err != nil {
 		return nil
 	}
-	dbUser, ok := data.(models.User)
+	user, ok := data.(models.User)
 	if !ok {
 		return nil
 	}
-	user := schema.User{
-		ID:       graphql.ID(dbUser.Id.Hex()),
-		Name:     dbUser.Name,
-		Viewings: mapViewings(dbUser.Viewings),
-	}
-	return &user
-}
-
-func LoadUsersByName(name string, ctx context.Context) []*schema.User {
-	client := db.GetFromContext(ctx)
-	ldr := newUserLoader(client)
-	dbUsers := ldr.r.SearchByName(name)
-	var users []*schema.User
-	for _, dbUser := range dbUsers {
-		user := schema.User{
-			ID:       graphql.ID(dbUser.Id.Hex()),
-			Name:     dbUser.Name,
-			Viewings: mapViewings(dbUser.Viewings),
-		}
-		users = append(users, &user)
-	}
-	return users
+	return mappers.MapUser(user)
 }
 
 type userLoader struct {
@@ -73,17 +51,4 @@ func (ldr userLoader) loadBatch(ctx context.Context, keys []interface{}) []*data
 		}
 	}
 	return results
-}
-
-func mapViewings(dbViewings []models.Viewing) []schema.Viewing {
-	viewings := make([]schema.Viewing, len(dbViewings))
-	for i, dbViewing := range dbViewings {
-		viewings[i] = schema.Viewing{
-			ID:        graphql.ID(dbViewing.Id.Hex()),
-			StartTime: graphql.Time{Time: dbViewing.StartTime},
-			EndTime:   graphql.Time{Time: dbViewing.EndTime},
-			Film:      graphql.ID(dbViewing.FilmId.Hex()),
-		}
-	}
-	return viewings
 }

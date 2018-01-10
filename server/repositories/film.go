@@ -3,6 +3,7 @@ package repositories
 import (
 	"time"
 
+	"github.com/chrisfisher/jubilant-waffle/server/db"
 	"github.com/chrisfisher/jubilant-waffle/server/models"
 
 	"gopkg.in/mgo.v2"
@@ -13,10 +14,19 @@ type FilmRepository struct {
 	C *mgo.Collection
 }
 
-func (r *FilmRepository) Create(film *models.Film) error {
+func NewFilmRepository(client *db.Client) *FilmRepository {
+	c := client.DbCollection("films")
+	r := FilmRepository{c}
+	return &r
+}
+
+func (r *FilmRepository) Create(film *models.Film) (*models.Film, error) {
+	if film.Id == "" {
+		film.Id = bson.NewObjectId()
+	}
 	film.CreatedOn = time.Now()
 	err := r.C.Insert(&film)
-	return err
+	return film, err
 }
 
 func (r *FilmRepository) GetById(id string) (film models.Film, err error) {

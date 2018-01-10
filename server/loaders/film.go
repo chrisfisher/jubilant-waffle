@@ -4,15 +4,12 @@ import (
 	"context"
 
 	"github.com/chrisfisher/jubilant-waffle/server/db"
+	"github.com/chrisfisher/jubilant-waffle/server/mappers"
 	"github.com/chrisfisher/jubilant-waffle/server/models"
 	"github.com/chrisfisher/jubilant-waffle/server/repositories"
 	"github.com/chrisfisher/jubilant-waffle/server/schema/types"
 
-	"gopkg.in/mgo.v2/bson"
-
 	"gopkg.in/nicksrandall/dataloader.v4"
-
-	graphql "github.com/neelance/graphql-go"
 )
 
 func LoadFilmById(id string, ctx context.Context) *schema.Film {
@@ -24,38 +21,11 @@ func LoadFilmById(id string, ctx context.Context) *schema.Film {
 	if err != nil {
 		return nil
 	}
-	dbFilm, ok := data.(models.Film)
+	m, ok := data.(models.Film)
 	if !ok {
 		return nil
 	}
-	film := schema.Film{
-		ID:            graphql.ID(dbFilm.Id.Hex()),
-		Title:         dbFilm.Title,
-		Description:   dbFilm.Description,
-		Rating:        dbFilm.Rating,
-		Reviews:       mapReviews(dbFilm.Reviews),
-		ViewedByUsers: mapIds(dbFilm.ViewedByUsers),
-	}
-	return &film
-}
-
-func LoadFilmsByTitle(title string, ctx context.Context) []*schema.Film {
-	client := db.GetFromContext(ctx)
-	ldr := newFilmLoader(client)
-	dbFilms := ldr.r.SearchByTitle(title)
-	var films []*schema.Film
-	for _, dbFilm := range dbFilms {
-		film := schema.Film{
-			ID:            graphql.ID(dbFilm.Id.Hex()),
-			Title:         dbFilm.Title,
-			Description:   dbFilm.Description,
-			Rating:        dbFilm.Rating,
-			Reviews:       mapReviews(dbFilm.Reviews),
-			ViewedByUsers: mapIds(dbFilm.ViewedByUsers),
-		}
-		films = append(films, &film)
-	}
-	return films
+	return mappers.MapFilm(m)
 }
 
 type filmLoader struct {
@@ -81,24 +51,4 @@ func (ldr filmLoader) loadBatch(ctx context.Context, keys []interface{}) []*data
 		}
 	}
 	return results
-}
-
-func mapReviews(dbReviews []models.Review) []schema.Review {
-	reviews := make([]schema.Review, len(dbReviews))
-	for i, dbReview := range dbReviews {
-		reviews[i] = schema.Review{
-			ID:       graphql.ID(dbReview.Id.Hex()),
-			Stars:    dbReview.Stars,
-			Comments: dbReview.Comments,
-		}
-	}
-	return reviews
-}
-
-func mapIds(objectIds []bson.ObjectId) []graphql.ID {
-	ids := make([]graphql.ID, len(objectIds))
-	for i, objectId := range objectIds {
-		ids[i] = graphql.ID(objectId.Hex())
-	}
-	return ids
 }

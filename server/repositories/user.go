@@ -3,6 +3,7 @@ package repositories
 import (
 	"time"
 
+	"github.com/chrisfisher/jubilant-waffle/server/db"
 	"github.com/chrisfisher/jubilant-waffle/server/models"
 
 	"gopkg.in/mgo.v2"
@@ -11,6 +12,12 @@ import (
 
 type UserRepository struct {
 	C *mgo.Collection
+}
+
+func NewUserRepository(client *db.Client) *UserRepository {
+	c := client.DbCollection("users")
+	r := UserRepository{c}
+	return &r
 }
 
 func (r *UserRepository) Create(user *models.User) error {

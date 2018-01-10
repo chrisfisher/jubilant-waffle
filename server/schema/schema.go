@@ -3,6 +3,7 @@ package schema
 var Schema = `
 	schema {
 		query: Query
+		mutation: Mutation
 	}
 	# The query type which represents all entry points into our object graph
 	type Query {
@@ -10,6 +11,10 @@ var Schema = `
 		searchFilms(title: String!): [Film]!
 		user(id: ID!): User
 		searchUsers(name: String!): [User]!
+	}
+	# The mutation type which represents all updates we can make to our data
+	type Mutation {
+		createFilm(Film: FilmInput!): Film
 	}
 	# Film ratings
 	enum Rating {
@@ -36,6 +41,15 @@ var Schema = `
 		reviews: [Review]
 		# Viewed by users
 		viewedByUsers: [User]
+	}
+	# Input when creating a new film
+	input FilmInput {
+		# The title of the film
+		title: String!
+		# The film description
+		description: String!
+		# The film rating
+		rating: Rating!
 	}
 	# A film review
 	type Review {
