@@ -14,7 +14,7 @@ import (
 )
 
 type viewingResolver struct {
-	viewing *schema.Viewing
+	viewing schema.Viewing
 }
 
 type viewingConnectionResolver struct {
@@ -88,7 +88,7 @@ func (r *viewingEdgeResolver) Cursor() graphql.ID {
 }
 
 func (r *viewingEdgeResolver) Node() *viewingResolver {
-	return &viewingResolver{&r.viewing}
+	return &viewingResolver{r.viewing}
 }
 
 func (r *pageInfoResolver) StartCursor() *graphql.ID {

@@ -21,7 +21,7 @@ func (r *userResolver) Name() string {
 func (r *userResolver) Viewings() *[]*viewingResolver {
 	viewingResolvers := make([]*viewingResolver, len(r.user.Viewings))
 	for i, viewing := range r.user.Viewings {
-		viewingResolvers[i] = &viewingResolver{&viewing}
+		viewingResolvers[i] = &viewingResolver{viewing}
 	}
 	return &viewingResolvers
 }
