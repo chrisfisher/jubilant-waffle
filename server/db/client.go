@@ -2,6 +2,7 @@ package db
 
 import (
 	"log"
+	"os"
 
 	"gopkg.in/mgo.v2"
 )
@@ -30,9 +31,12 @@ func NewClient() *Client {
 
 func getSession() *mgo.Session {
 	if session == nil {
+		host := os.Getenv("DB_HOST")
+		if host == "" {
+			host = "localhost"
+		}
 		var err error
-		session, err = mgo.Dial("127.0.0.1:27017")
-
+		session, err = mgo.Dial(host + ":27017")
 		if err != nil {
 			log.Fatalf("[getSession]: %s\n", err)
 		}

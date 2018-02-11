@@ -6,8 +6,8 @@ services:
     build: .
     ports:
       - "8080:8080"
-    links:
-      - db
+    environment:
+      - DB_HOST=db
   db:
     container_name: waffle-db
     image: mongo
