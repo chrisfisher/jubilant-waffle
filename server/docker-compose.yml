@@ -12,6 +12,6 @@ services:
     container_name: waffle-db
     image: mongo
     volumes:
-      - ./mongo/data:/data/db
+      - /data/db:/data/db
     ports:
       - "27017:27017"
