@@ -2,7 +2,9 @@ version: "3"
 services:
   api:
     container_name: waffle-api
-    restart: always
+    restart: unless-stopped
+    volumes:
+      - .:/go/src/github.com/chrisfisher/jubilant-waffle/server
     build: .
     ports:
       - "8080:8080"

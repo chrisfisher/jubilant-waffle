@@ -1,2 +1,4 @@
 .vscode/
 server/vendor/
+server/tmp/
+server/server
